@@ -23,7 +23,7 @@ def move_forward():
     #The number of printed sentences is 3 only editable in the function file.
     sen, db = get_last_sentences(name = num_story)
 
-    return render_template('write.html', num_story = str(num_story), phrase_1 = sen[0], phrase_2 = sen[1],phrase_3 = db);
+    return render_template('write.html', num_story = str(num_story), phrase_1 = sen[0], phrase_2 = sen[1],phrase_3 = sen[2]);
 
 # @app.route("/save/", methods=['POST'])
 # def save_story():
