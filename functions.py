@@ -11,9 +11,9 @@ import random
 from upstash_redis import Redis
 
 db_url = os.getenv("TEST")
-redis = Redis(url="https://super-minnow-34706.upstash.io", token="db_url")
+redis = Redis(url="https://super-minnow-34706.upstash.io", token=db_url)
 
-path_to_stories = 'stories'
+#path_to_stories = 'stories'
 n_sentences = 3
 
 def load_file(name = '1'):
@@ -104,12 +104,16 @@ def get_last_sentences(name = '1', text = None, n_sentences = n_sentences):
             to_return.append(f)
             cpt += 1
     return list(reversed(to_return))
-
+"""
 def get_all_filenames(path = path_to_stories):
     all_files = [f.split('.')[0] for f in os.listdir(path)]
     #print(all_files)
     if len(all_files) >= 9**9:
         print('All stories have been written')
+    return all_files
+"""
+def get_all_filenames():
+    keys = redis.keys("*")
     return all_files
 
 def check_layer_np1(name = '0000000001'):
@@ -173,7 +177,7 @@ def select_file(name = 0):
 
 def convert_name_to_path(name = '1'):
     #return os.path.join(path_to_stories,str(name).zfill(10) +'.txt')
-    return os.path.join(path_to_stories,str(name).zfill(10))
+    return str(name).zfill(10)
 
 def write_file(name = 1, text = 'Une océan infinie'):
     #Here we assume that the name selection phase prevent any selection of a wrong file 
