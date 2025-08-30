@@ -8,25 +8,17 @@ Created on Fri Aug 22 07:46:38 2025
 #if 12 exists, the next one will be 13 (not 19)
 import os
 import random
-<<<<<<< HEAD
 from upstash_redis import Redis
 
 db_url = os.getenv("DATABASE_URL")
 redis = Redis(url="https://super-minnow-34706.upstash.io", token="db_url")
 
-value = redis.get("0000000001")
-print(value)
-=======
-#from upstash_redis import Redis
->>>>>>> e4e465acb1c4db4eae069bd38725b564fe55fc45
-
 path_to_stories = 'stories'
 n_sentences = 3
 
-
 def load_file(name = '1'):
     path = convert_name_to_path(name)
-    value = redis.get(name)
+    text = redis.get(name)
     #with open(path, mode = 'r', encoding="utf-8") as f:
     #    text = f.read()
     return text
