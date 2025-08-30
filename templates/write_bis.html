@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>La multhistoire</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 1200px; margin: auto; padding: 20px; }
+    textarea { width: 100%; height: 200px; margin-bottom: 10px; }
+    button { padding: 10px 20px; font-size: 16px; }
+    #last-sentences { font-style: italic; margin-bottom: 20px; }
+    #message { color: green; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2 style="color:Tomato;">Je n'ai détecté que {{n_sentences}} phrases :(</h1>
+  <p>Est-ce que tu pourrais écrire au moins 5 phrases ?<br />
+  Et si jamais c'est mon code qui bug, toutes mes excuses ! Pourrais-tu ajouter des ptits points '.' après les éventuels '?', '!' ? Merciiiiiii <3</p>
+  
+  <h2 style="color:MediumSeaGreen;">Histoire numéro {{num_story}}</h1>
+  <div id="last-sentences"><b>Chargement des 3 dernières phrases :</b></div>
+  <p>{{phrase_1}}<br />
+  {{phrase_2}}<br />
+  {{phrase_3}}</p>
+  
+  <div><object data="stories/1.txt"></object></div>
+   
+  <form action="/save/" method="POST">
+	<input type="hidden" name="num_story" value="{{num_story}}">
+    <textarea name="story" placeholder=""> {{prev_text}} </textarea>
+	
+	<input type="submit" value="Envoyer l'histoire" />
+	<p><i>L'histoire sera sauvegardée uniquement si elle fait plus de 5 phrases. Dans le doute tu peux écrire une petite phrase de plus.</i></p>
+  </form> 
+
+  <hr>
+	<form action="/">
+		<input type="submit" value="Retour à l'acceuil" />
+	</form>
+	
+</body>
+</html>

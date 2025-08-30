@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>La multistoire</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 1200px; margin: auto; padding: 20px; }
+    textarea { width: 100%; height: 200px; margin-bottom: 10px; }
+    button { padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>La multhistoire</h1>
+  <div id="Explications">Bienvenue dans la Multistoire ! Écrivons les histoires ensemble.</div>
+  <p>Une histoire commune pour commencer, puis 10 nouvelles suites imaginées par 10 personnes différentes, 9 fois, cela représente 387420489 nouvelles uniques de 10 pages chacunes.</p>
+  <p>Écris ta/tes page, et reprends l'histoire où elle s'est arrêtée.</p>
+
+  <h2>Un début unique :</h2>
+  
+  <textarea id="original_story" name="story" readonly>{{original_story}}</textarea>
+
+  <h2>Continuer une histoire ...</h2>
+
+  <form action="/write/" method="post">
+	  <input type="submit" value="Écrire" />
+  </form> 
+	
+  <hr>
+  <h2>Lire une histoire complète</h2>
+  <p>Auncune histoire n'est complète pour l'instant. Patience jeune pousse, les mots s'écrivent au rythme où les fleurs fânent.</p>  
+  <button onclick="loadFullStory()">Voir l’histoire complète</button>
+  <div id="full-story"></div>
+  
+  <p style="font-size:0.8em; "><i>10 histoires écrites par une seule personne ne seront jamais aussi riches que celle écrite par 10 personnes. </i></p>
+</body>
+</html>
