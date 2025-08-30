@@ -10,7 +10,7 @@ import os
 import random
 from upstash_redis import Redis
 
-db_url = os.getenv("DATABASE_URL")
+db_url = os.getenv("TEST")
 redis = Redis(url="https://super-minnow-34706.upstash.io", token="db_url")
 
 path_to_stories = 'stories'
