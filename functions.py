@@ -18,7 +18,7 @@ n_sentences = 3
 
 def load_file(name = '1'):
     path = convert_name_to_path(name)
-    text = redis.get(name)
+    text = redis.get(path)
     #with open(path, mode = 'r', encoding="utf-8") as f:
     #    text = f.read()
     return text
