@@ -8,11 +8,11 @@ Created on Fri Aug 22 07:46:38 2025
 #if 12 exists, the next one will be 13 (not 19)
 import os
 import random
-path_to_stories = 'stories'
-n_sentences = 3
 from upstash_redis import Redis
 
-db_url = os.getenv("DATABASE_URL")
+path_to_stories = 'stories'
+n_sentences = 3
+
 
 def load_file(name = '1'):
     path = convert_name_to_path(name)
@@ -100,8 +100,7 @@ def get_last_sentences(name = '1', text = None, n_sentences = n_sentences):
         if (len(f) > 4) and (cpt < n_sentences):
             to_return.append(f)
             cpt += 1
-    db_url = os.getenv("DATABASE_URL")
-    return list(reversed(to_return)), db_url
+    return list(reversed(to_return))
 
 def get_all_filenames(path = path_to_stories):
     all_files = [f.split('.')[0] for f in os.listdir(path)]
