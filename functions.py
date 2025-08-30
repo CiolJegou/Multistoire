@@ -8,7 +8,7 @@ Created on Fri Aug 22 07:46:38 2025
 #if 12 exists, the next one will be 13 (not 19)
 import os
 import random
-from upstash_redis import Redis
+#from upstash_redis import Redis
 
 path_to_stories = 'stories'
 n_sentences = 3
