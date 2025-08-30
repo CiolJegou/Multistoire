@@ -159,7 +159,7 @@ def select_file(name = 0):
             selected_file = rand_name
         else:
             #selected_file = os.path.join(path_to_stories,name_str + '.txt')
-            selected_file = name_str + '.txt'
+            selected_file = name_str
     else:
         print('Unknown file name, returning a random one')
         is_full = True
@@ -172,7 +172,8 @@ def select_file(name = 0):
     return selected_file
 
 def convert_name_to_path(name = '1'):
-    return os.path.join(path_to_stories,str(name).zfill(10) +'.txt')
+    #return os.path.join(path_to_stories,str(name).zfill(10) +'.txt')
+    return os.path.join(path_to_stories,str(name).zfill(10))
 
 def write_file(name = 1, text = 'Une océan infinie'):
     #Here we assume that the name selection phase prevent any selection of a wrong file 
