@@ -114,7 +114,7 @@ def get_all_filenames(path = path_to_stories):
 """
 def get_all_filenames():
     keys = redis.keys("*")
-    return all_files
+    return keys
 
 def check_layer_np1(name = '0000000001'):
     #Check if file xxxx9 of layer n+1 exists in files list
