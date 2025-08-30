@@ -8,13 +8,22 @@ Created on Fri Aug 22 07:46:38 2025
 #if 12 exists, the next one will be 13 (not 19)
 import os
 import random
+from upstash_redis import Redis
+
+db_url = os.getenv("DATABASE_URL")
+redis = Redis(url="https://super-minnow-34706.upstash.io", token="db_url")
+
+value = redis.get("0000000001")
+print(value)
+
 path_to_stories = 'stories'
 n_sentences = 3
 
 def load_file(name = '1'):
     path = convert_name_to_path(name)
-    with open(path, mode = 'r', encoding="utf-8") as f:
-        text = f.read()
+    value = redis.get(name)
+    #with open(path, mode = 'r', encoding="utf-8") as f:
+    #    text = f.read()
     return text
 
 def split_text(name = '1', text = None):
@@ -185,8 +194,9 @@ def write_file(name = 1, text = 'Une océan infinie'):
     #print(new_name)
     #Write the text in the newfile
     #Just in case the file already exists, we append at the end
-    with open(new_name, mode = 'a', encoding="utf-8") as f:
-        f.write(text)
+    redis.set(new_name, text)
+    #with open(new_name, mode = 'a', encoding="utf-8") as f:
+    #    f.write(text)
     
 #name = '1'
 #sf = select_file(0)
