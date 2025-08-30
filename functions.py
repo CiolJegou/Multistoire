@@ -10,6 +10,10 @@ import os
 import random
 path_to_stories = 'stories'
 n_sentences = 3
+from upstash_redis import Redis
+
+db_url = os.getenv("DATABASE_URL")
+print(db_url)
 
 def load_file(name = '1'):
     path = convert_name_to_path(name)
