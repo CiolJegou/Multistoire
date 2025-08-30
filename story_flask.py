@@ -21,7 +21,7 @@ def move_forward():
     #0 means it selects a random story
     num_story = select_file(0)
     #The number of printed sentences is 3 only editable in the function file.
-    sen, db = get_last_sentences(name = num_story)
+    sen = get_last_sentences(name = num_story)
 
     return render_template('write.html', num_story = str(num_story), phrase_1 = sen[0], phrase_2 = sen[1],phrase_3 = sen[2]);
 
