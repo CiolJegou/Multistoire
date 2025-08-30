@@ -19,7 +19,7 @@ def index():
 @app.route("/write/", methods=['POST'])
 def move_forward():
     #0 means it selects a random story
-    num_story = select_file(0)
+    num_story = select_file(1)
     #The number of printed sentences is 3 only editable in the function file.
     sen, db = get_last_sentences(name = num_story)
 
