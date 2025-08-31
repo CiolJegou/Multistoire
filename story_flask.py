@@ -14,7 +14,8 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     original_story = load_file(name=1)
-    return render_template("home.html", original_story = original_story)
+    n_story = len(get_all_filenames())
+    return render_template("home.html", original_story = original_story, n_story = n_story)
 
 @app.route("/write/", methods=['POST'])
 def move_forward():
