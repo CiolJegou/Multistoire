@@ -8,6 +8,7 @@ Created on Fri Aug 22 07:46:38 2025
 #if 12 exists, the next one will be 13 (not 19)
 import os
 import random
+from collections import defaultdict
 from upstash_redis import Redis
 
 db_url = os.getenv("TEST")
@@ -206,3 +207,79 @@ def write_file(name = 1, text = 'Une océan infinie'):
 #print(get_last_sentences())
 #text = 'Salut la team. Ceci est un test ? Je sais pas trop. Peut etre que ça marche pas en fait !'
 #write_file(sf, text)
+
+### Story Building
+
+def build_tree(names: list[str]):
+    """
+    Create a tree from the names.
+
+    tree = {father:set(child)}
+    is_leaf = {id: is_leaf}
+    1st story has '000...0' as father
+    """
+    sorted_names = sorted(names, reverse=True) # names ordered from 9...9, 9...1, 0...1
+    tree = defaultdict(set)
+    is_leaf = {n: True for n in sorted_names}
+    level = 0
+    while level < 10 and len(sorted_names) > 0:
+        current = sorted_names.pop()
+        # pass to next level
+        if current[:9-level] != '0'*(9-level):
+            level += 1
+            sorted_names.append(current)
+            continue
+        
+        father = '0'*(10-level) + current[10-level:]
+        tree[father].add(current)
+        is_leaf[father] = False
+    
+    return tree, is_leaf
+    
+def write_stories(stories: dict[str, str])->dict[str,str]:
+    """
+    write all stories, as {leaf_id: story}
+    """
+    sorted_ids = sorted(list(stories.keys()))
+    res = defaultdict(str)
+    for id in sorted_ids:
+        res[id] += '\n'+stories[id]
+
+    return res
+
+
+def build_stories(folder: str):
+    """
+    Returns two dictionnaries:
+    - one with ended stories
+    - one with the remaining leaf stories
+
+    Organized as {name: story}
+    """
+    # Extract stories from folder
+    # files = {name: content}
+    stories = {}
+    for filename in os.listdir(folder):
+        _, story_id = os.path.split(filename) # extract story id, e.g '000...1'
+        with open(filename, 'r') as file:
+            stories[story_id] = file.readlines()
+    
+    # Build tree
+    tree, leaf_id = build_tree(list(stories.keys()))
+
+    # Build leaf stories
+    ended_stories = {}
+    in_progress_stories = {}
+    for id in leaf_id: 
+        leaf_story = ...
+        if leaf_id[0] != '0': # ended_story
+            ended_stories[id] = leaf_story #######"" to change: write whle story
+        else: # in progress
+            in_progress_stories[id] = leaf_story
+
+    return ended_stories, in_progress_stories
+
+
+if __name__=='__main__':
+    names = ['0'*9+'1', '0'*8+'11', '0'*8+'71','0'*7+'211']
+    print(build_tree(names))
