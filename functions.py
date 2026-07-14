@@ -9,6 +9,7 @@ Created on Fri Aug 22 07:46:38 2025
 import os
 import random
 from collections import defaultdict
+import zipfile
 from upstash_redis import Redis
 
 db_url = os.getenv("TEST")
@@ -215,40 +216,64 @@ def build_tree(names: list[str]):
     Create a tree from the names.
 
     tree = {father:set(child)}
-    is_leaf = {id: is_leaf}
     1st story has '000...0' as father
     """
-    sorted_names = sorted(names, reverse=True) # names ordered from 9...9, 9...1, 0...1
+    sorted_names = sorted(names, reverse=True) # names ordered from 19...9, 0...01
     tree = defaultdict(set)
-    is_leaf = {n: True for n in sorted_names}
+    # is_leaf = {n: True for n in sorted_names}
     level = 0
-    while level < 10 and len(sorted_names) > 0:
-        current = sorted_names.pop()
+    while level <= 10 and len(sorted_names) > 0:
+        current = sorted_names.pop() # "oldest", node
         # pass to next level
-        if current[:9-level] != '0'*(9-level):
+        if current[9-level] == '1':
             level += 1
             sorted_names.append(current)
             continue
         
-        father = '0'*(10-level) + current[10-level:]
+        father = '0'+current[:-1]
         tree[father].add(current)
-        is_leaf[father] = False
     
-    return tree, is_leaf
+    return tree
     
-def write_stories(stories: dict[str, str])->dict[str,str]:
+def write_stories(stories: dict[str, str], tree, separator: str='\n'+'*'*10+'\n')->dict[str,str]:
     """
     write all stories, as {leaf_id: story}
     """
-    sorted_ids = sorted(list(stories.keys()))
+    sorted_ids = sorted(list(stories.keys()), reverse=False) # first text to last text
     res = defaultdict(str)
     for id in sorted_ids:
-        res[id] += '\n'+stories[id]
+        children = tree[id]
+        for child in children:
+            res[child] = res[id] +separator + stories[child]
+        if len(children) != 0: # not leaf
+            del res[id] # remove the father
 
     return res
 
 
-def build_stories(folder: str):
+def stories_from_folder(folder):
+    stories = {}
+    for filename in os.listdir(folder):
+        _, story_id = os.path.split(filename) # extract story id, e.g '000...1'
+        with open(filename, 'r') as file:
+            stories[story_id] = file.readlines()
+    return stories
+
+def stories_from_zip(filename):
+    stories = {}
+    if not filename.endswith('.zip'):
+        filename += '.zip'
+    with zipfile.ZipFile(filename, "r") as zipf:
+        for id in zipf.namelist():
+            if id.endswith('.txt'): # not path to story file
+                _, story_id = os.path.split(id)
+                story_id = os.path.splitext(story_id)[0] # extract story id, e.g '000...1'
+                content = zipf.read(id)
+                stories[story_id] = content.decode()
+        
+    return stories
+
+def build_stories(folder: str=None, zipfile: str=None):
     """
     Returns two dictionnaries:
     - one with ended stories
@@ -258,20 +283,23 @@ def build_stories(folder: str):
     """
     # Extract stories from folder
     # files = {name: content}
-    stories = {}
-    for filename in os.listdir(folder):
-        _, story_id = os.path.split(filename) # extract story id, e.g '000...1'
-        with open(filename, 'r') as file:
-            stories[story_id] = file.readlines()
+    if folder is not None:
+        stories = stories_from_folder(folder)
+    elif zipfile is not None:
+        stories = stories_from_zip(zipfile)
+    else:
+        raise ValueError('folder and zipfile cannot be None simultaneously.')
     
     # Build tree
-    tree, leaf_id = build_tree(list(stories.keys()))
+    tree = build_tree(list(stories.keys()))
 
     # Build leaf stories
+    leaf_stories = write_stories(stories, tree)
+    leaf_id = list(leaf_stories.keys())
     ended_stories = {}
     in_progress_stories = {}
     for id in leaf_id: 
-        leaf_story = ...
+        leaf_story = leaf_stories[id]
         if leaf_id[0] != '0': # ended_story
             ended_stories[id] = leaf_story #######"" to change: write whle story
         else: # in progress
@@ -281,5 +309,21 @@ def build_stories(folder: str):
 
 
 if __name__=='__main__':
-    names = ['0'*9+'1', '0'*8+'11', '0'*8+'71','0'*7+'211']
-    print(build_tree(names))
+    # names = ['0'*9+'1', '0'*8+'11','0'*8+'21', '0'*8+'71','0'*7+'211']
+    # test_stories = ['HAHA', 'hoho', 'hihi', 'huhu','hehe']
+
+    # stories = {names[i]:test_stories[i] for i in range(len(names))}
+    # tree = build_tree(names)
+    # leaf_stories = write_stories(stories, tree)
+    # print('Tree:', tree)
+    # print('Stories:', leaf_stories)
+
+    # stories = stories_from_zip('C:\\Users\\samje\\Documents\\Autres\\Python codes\\Multistoire\\txt_files.zip')
+    # a = 1
+
+    import json 
+    folder = os.getcwd()
+    stories = build_stories(zipfile=folder + '\\txt_files.zip')
+    print(stories[0]['1111010000'])
+    # with open(folder + '\\test_story.json', 'w') as file:
+        # json.dump(stories, file)
