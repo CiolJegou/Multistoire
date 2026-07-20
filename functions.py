@@ -8,6 +8,8 @@ Created on Fri Aug 22 07:46:38 2025
 #if 12 exists, the next one will be 13 (not 19)
 import os
 import random
+from collections import defaultdict
+import zipfile
 from upstash_redis import Redis
 
 db_url = os.getenv("TEST")
@@ -206,3 +208,179 @@ def write_file(name = 1, text = 'Une océan infinie'):
 #print(get_last_sentences())
 #text = 'Salut la team. Ceci est un test ? Je sais pas trop. Peut etre que ça marche pas en fait !'
 #write_file(sf, text)
+
+### Story Building
+
+def build_tree(names: list[str]):
+    """
+    Create a tree from a list of names.
+
+    tree = {father:set(child)}
+    1st story has '000...0' as father
+    """
+    sorted_names = sorted(names, reverse=True) # names ordered from 19...9, 0...01
+    tree = defaultdict(set)
+    # is_leaf = {n: True for n in sorted_names}
+    level = 0
+    while level <= 10 and len(sorted_names) > 0:
+        current = sorted_names.pop() # "oldest", node
+        # pass to next level
+        if current[9-level] == '1':
+            level += 1
+            sorted_names.append(current)
+            continue
+        
+        father = '0'+current[:-1]
+        tree[father].add(current)
+    
+    return tree
+    
+def write_stories(stories: dict[str, str], tree, separator: str='\n'+'*'*10+'\n')->dict[str,str]:
+    """
+    Write all stories, as {leaf_id: story}.
+
+    Parameters
+    ----------
+    stories: dict
+        Dictionnary of stories (from stories_from_XXX).
+    tree: dict
+        Tree defining the father-child relationship between stories,
+        obtained by ``build_tree``.
+    separator: str, default='\n'+'*'*10+'\n'
+        Separator between individual small stories. 
+        Used to visually separate them in a global story.
+
+    Return
+    ------
+    res: dict
+        Dictionnary of leaf stories, i.e concatenation of all the sub-stories
+        up to the last sub-story written, for each branch.
+        Organized as {leaf_id: story string}
+    """
+    sorted_ids = sorted(list(stories.keys()), reverse=False) # first text to last text
+    res = defaultdict(str)
+    for id in sorted_ids:
+        children = tree[id]
+        for child in children:
+            res[child] = res[id] +separator + stories[child]
+        if len(children) != 0: # not leaf
+            del res[id] # remove the father
+
+    return res
+
+
+def stories_from_folder(folder: str)->dict[str,str]:
+    """
+    Generate stories dict from a folder of stories.
+
+    Parameters
+    ----------
+    folder: str
+        Path to the folder of stories.
+    
+    Returns
+    -------
+    stories: dict
+        Dictionnary with the stories, organised as
+        {story_id: story string}
+    """
+    stories = {}
+    for filename in os.listdir(folder):
+        _, story_id = os.path.split(filename) # extract story id, e.g '000...1'
+        with open(filename, 'r') as file:
+            stories[story_id] = file.readlines()
+    return stories
+
+def stories_from_zip(filepath: str)->dict[str,str]:
+    """
+    Generate stories dict from a folder of stories.
+
+    Parameters
+    ----------
+    filepath: str
+        Path to the zipfile of stories.
+    
+    Returns
+    -------
+    stories: dict
+        Dictionnary with the stories, organised as
+        {story_id: story string}
+    """
+    stories = {}
+    if not filepath.endswith('.zip'):
+        filepath += '.zip'
+    with zipfile.ZipFile(filepath, "r") as zipf:
+        for id in zipf.namelist():
+            if id.endswith('.txt'): # not path to story file
+                _, story_id = os.path.split(id)
+                story_id = os.path.splitext(story_id)[0] # extract story id, e.g '000...1'
+                content = zipf.read(id)
+                stories[story_id] = content.decode()
+        
+    return stories
+
+def build_stories(folder: str=None, zipfile: str=None, separator: str='\n'+'*'*10+'\n'):
+    """
+    Returns two dictionnaries:
+    - one with ended stories
+    - one with the remaining leaf stories
+
+    Parameters
+    ----------
+    folder: str, optionnal
+        Path to the folder containing stories.
+    zipfile: str, optionnal
+        Path of the zip file containing stories.
+    separator: str, default='\n'+'*'*10+'\n'
+        Separator between individual small stories. 
+        Used to visually separate them in a global story.
+    
+    Returns
+    -------
+    ended_stories: dict
+        Dictionnary of ended stories, organized as {story_id: story string}.
+    in_progress_stories: dict
+        Dictionnary of stories in progress, organized as {story_id: story string}.
+    """
+    # Extract stories from folder
+    # files = {name: content}
+    if folder is not None:
+        stories = stories_from_folder(folder)
+    elif zipfile is not None:
+        stories = stories_from_zip(zipfile)
+    else:
+        raise ValueError('folder and zipfile cannot be None simultaneously.')
+    
+    # Build tree
+    tree = build_tree(list(stories.keys()))
+
+    # Build leaf stories
+    leaf_stories = write_stories(stories, tree, separator)
+    leaf_id = list(leaf_stories.keys())
+    ended_stories = {}
+    in_progress_stories = {}
+    for id in leaf_id: 
+        leaf_story = leaf_stories[id]
+        if id[0] != '0': # ended_story
+            ended_stories[id] = leaf_story #######"" to change: write whle story
+        else: # in progress
+            in_progress_stories[id] = leaf_story
+
+    return ended_stories, in_progress_stories
+
+
+if __name__=='__main__':
+    import json 
+    folder = os.getcwd()
+    ended_stories, in_progress_stories = build_stories(zipfile=folder + '\\txt_files.zip')
+
+    # Save files as json
+    with open(folder + '\\processed_stories\\ended_stories.json', 'w') as file:
+        json.dump(ended_stories, file, indent=4, ensure_ascii=False)
+    with open(folder + '\\processed_stories\\in_progress_stories.json', 'w') as file:
+        json.dump(in_progress_stories, file, indent=4, ensure_ascii=False)
+
+    # Save ended stories as txt
+    for id, story in ended_stories.items():
+        with open(folder + f'\\processed_stories\\{id}.txt', 'w', encoding='utf-8') as file:
+            file.write(story)
