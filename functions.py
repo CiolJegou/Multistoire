@@ -421,3 +421,8 @@ if __name__=='__main__':
     for id, story in ended_stories.items():
         with open(folder + f'\\processed_stories\\{id}.txt', 'w', encoding='utf-8') as file:
             file.write(story)
+
+
+### TO DO ###
+# - add the root story to the written stories !!
+# - visualisation tool to navigate through the stories
