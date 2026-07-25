@@ -16,7 +16,8 @@ db_url = os.getenv("TEST")
 redis = Redis(url="https://super-minnow-34706.upstash.io", token=db_url)
 
 #path_to_stories = 'stories'
-n_sentences = 3
+N_SENTENCES = 3 # minimal nb of sentences
+NB_SUB_STORIES = 10 # number of sub_stories in a story
 
 def load_file(name = '1'):
     path = convert_name_to_path(name)
@@ -89,12 +90,12 @@ def split_text(name = '1', text = None):
         print(f'Unknown case number, weird file at path: {name}')
     return a_split
     
-def get_n_sentences(name = '1', text = None):
+def get_N_SENTENCES(name = '1', text = None):
     a_split = split_text(name = name, text = text)
     return len(a_split)
 
 
-def get_last_sentences(name = '1', text = None, n_sentences = n_sentences):
+def get_last_sentences(name = '1', text = None, N_SENTENCES = N_SENTENCES):
     a_split = split_text(name = name, text = text)
     #I get the two last sentences of the list
     #Parsed in reverse and remove any return to line
@@ -102,7 +103,7 @@ def get_last_sentences(name = '1', text = None, n_sentences = n_sentences):
     cpt= 0
     for f in reversed(a_split):
         #At least 5 character in the sentence 
-        if (len(f) > 4) and (cpt < n_sentences):
+        if (len(f) > 4) and (cpt < N_SENTENCES):
             to_return.append(f)
             cpt += 1
     return list(reversed(to_return))
@@ -211,28 +212,63 @@ def write_file(name = 1, text = 'Une océan infinie'):
 
 ### Story Building
 
-def build_tree(names: list[str]):
+def build_tree(names: list[str], accept_longer_stories: bool=True):
     """
     Create a tree from a list of names.
 
-    tree = {father:set(child)}
-    1st story has '000...0' as father
+    Parameters
+    ----------
+    names: list of str
+        List of the names of the stories.
+        Should be at least ``NB_SUB_STORIES`` length.
+        First story is '00...1', sub_story is '00...10', etc.
+    accept_longer_stories: bool, default=True
+        Wether to accept stories with more than ``NB_SUB_STORIES``
+        or not.
+    
+    Returns
+    -------
+    tree: dict of set
+        A dictionnary, where the keys are the names of the father nodes
+        (previous sub-story) and values are sets containing the names
+        of the children (following suib-stories).
     """
     sorted_names = sorted(names, reverse=True) # names ordered from 19...9, 0...01
     tree = defaultdict(set)
+    # Remove the starting story (no father)
+    if sorted_names[-1] == '0'*(NB_SUB_STORIES-1)+'1':
+        sorted_names.pop()
     # is_leaf = {n: True for n in sorted_names}
-    level = 0
-    while level <= 10 and len(sorted_names) > 0:
+    level = 1 # begin at 1st sub-story
+    while level <= NB_SUB_STORIES and len(sorted_names) > 0:
         current = sorted_names.pop() # "oldest", node
-        # pass to next level
-        if current[9-level] == '1':
-            level += 1
-            sorted_names.append(current)
-            continue
+        
+        if level+1 < NB_SUB_STORIES: # not last stories
+            if current[-1-(level+1)] == '1': # pass to next level
+                level += 1
+                sorted_names.append(current) # put it back in the list
+                continue
+        else: # reached last stories: 1...X
+            if len(current) > NB_SUB_STORIES: # exit loop if story of 11 sub-stories
+                level += 1
+                sorted_names.append(current)
+                break
         
         father = '0'+current[:-1]
         tree[father].add(current)
     
+
+    if accept_longer_stories and len(sorted_names) > 0:
+        while len(sorted_names) > 0:
+            current = sorted_names.pop()
+            if len(current) > level+1: # next level
+                level += 1
+                sorted_names.append(current)
+                continue
+
+            father = current[:-1]
+            tree[father].add(current)
+
     return tree
     
 def write_stories(stories: dict[str, str], tree, separator: str='\n'+'*'*10+'\n')->dict[str,str]:
@@ -263,7 +299,8 @@ def write_stories(stories: dict[str, str], tree, separator: str='\n'+'*'*10+'\n'
         children = tree[id]
         for child in children:
             res[child] = res[id] +separator + stories[child]
-        if len(children) != 0: # not leaf
+        # not leaf: has child OR its child are longer stories than it should
+        if len(children) != 0 and len(next(iter(children)))==NB_SUB_STORIES: 
             del res[id] # remove the father
 
     return res
@@ -362,7 +399,7 @@ def build_stories(folder: str=None, zipfile: str=None, separator: str='\n'+'*'*1
     for id in leaf_id: 
         leaf_story = leaf_stories[id]
         if id[0] != '0': # ended_story
-            ended_stories[id] = leaf_story #######"" to change: write whle story
+            ended_stories[id] = leaf_story
         else: # in progress
             in_progress_stories[id] = leaf_story
 
