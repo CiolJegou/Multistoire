@@ -12,6 +12,8 @@ from collections import defaultdict
 import zipfile
 from upstash_redis import Redis
 
+from visualization import ArbreInteractif
+
 db_url = os.getenv("TEST")
 redis = Redis(url="https://super-minnow-34706.upstash.io", token=db_url)
 
@@ -271,7 +273,7 @@ def build_tree(names: list[str], accept_longer_stories: bool=True):
 
     return tree
     
-def write_stories(stories: dict[str, str], tree, separator: str='\n'+'*'*10+'\n')->dict[str,str]:
+def write_stories(stories: dict[str, str], tree, separator: str='\n'+'*'*10+'\n', leaf_only: bool=True)->dict[str,str]:
     """
     Write all stories, as {leaf_id: story}.
 
@@ -307,7 +309,7 @@ def write_stories(stories: dict[str, str], tree, separator: str='\n'+'*'*10+'\n'
         for child in children:
             res[child] = res[id] +separator + stories[child]
         # not leaf: has child OR its child have too many sub-stories
-        if len(children) != 0 and len(next(iter(children)))==NB_SUB_STORIES: 
+        if leaf_only and len(children) != 0 and len(next(iter(children)))==NB_SUB_STORIES: 
             del res[id] # remove the father
 
     return res
@@ -413,6 +415,25 @@ def build_stories(folder: str=None, zipfile: str=None, separator: str='\n'+'*'*1
     return ended_stories, in_progress_stories
 
 
+def visualise(folder: str=None, zipfile: str=None, preview_length=300):
+    if folder is not None:
+        stories = stories_from_folder(folder)
+    elif zipfile is not None:
+        stories = stories_from_zip(zipfile)
+    else:
+        raise ValueError('folder and zipfile cannot be None simultaneously.')
+    
+    # Build tree
+    tree = build_tree(list(stories.keys()))
+    values = write_stories(stories, tree, leaf_only=False)
+    app = ArbreInteractif(
+        tree=tree,
+        single_value=stories,
+        complete_value=values,
+        preview_length=preview_length
+    )
+    app.show()
+
 if __name__=='__main__':
     import json 
     folder = os.getcwd()
@@ -428,6 +449,8 @@ if __name__=='__main__':
     for id, story in ended_stories.items():
         with open(folder + f'\\processed_stories\\{id}.txt', 'w', encoding='utf-8') as file:
             file.write(story)
+
+    visualise(zipfile=folder + '\\txt_files.zip')
 
 
 ### TO DO ###
