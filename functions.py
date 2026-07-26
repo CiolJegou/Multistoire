@@ -295,11 +295,18 @@ def write_stories(stories: dict[str, str], tree, separator: str='\n'+'*'*10+'\n'
     """
     sorted_ids = sorted(list(stories.keys()), reverse=False) # first text to last text
     res = defaultdict(str)
+    # Set initial (starting) sub-story
+    first_story = '0'*(NB_SUB_STORIES-1)+'1'
+    if sorted_ids[0] == first_story:
+        res[first_story] = stories[first_story]
+    else:
+        res[first_story] = '-- INITIAL STORY --'
+    # Propagate stories
     for id in sorted_ids:
         children = tree[id]
         for child in children:
             res[child] = res[id] +separator + stories[child]
-        # not leaf: has child OR its child are longer stories than it should
+        # not leaf: has child OR its child have too many sub-stories
         if len(children) != 0 and len(next(iter(children)))==NB_SUB_STORIES: 
             del res[id] # remove the father
 
@@ -424,5 +431,4 @@ if __name__=='__main__':
 
 
 ### TO DO ###
-# - add the root story to the written stories !!
 # - visualisation tool to navigate through the stories
