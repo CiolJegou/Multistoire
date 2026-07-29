@@ -1,3 +1,6 @@
+from functions import *
+from visualization import ArbreInteractif
+
 ### Story Building
 
 def build_tree(names: list[str], accept_longer_stories: bool=True):
