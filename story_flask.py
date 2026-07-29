@@ -7,7 +7,6 @@ Created on Fri Aug 22 12:04:59 2025
 
 from flask import Flask, render_template, request
 from functions import *
-
 app = Flask(__name__)
 
     
@@ -49,7 +48,7 @@ def save_story():
         num_story = request.form.get("num_story") 
         sen = get_last_sentences(name = num_story)
         text = request.form.get("story")
-        n_sentences = get_n_sentences(name = None, text = text)
+        n_sentences = get_N_SENTENCES(name = None, text = text)
         if n_sentences < 5:
             print('Not passed')
             return render_template('write_bis.html', num_story = str(num_story), phrase_1 = sen[0], phrase_2 = sen[1],phrase_3 = sen[2], prev_text = text, n_sentences = n_sentences)
